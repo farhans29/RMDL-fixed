@@ -1,0 +1,63 @@
+sudo: required
+dist: trusty
+language: python
+matrix:
+    include:
+        - python: 3.6
+          env: KERAS_BACKEND=tensorflow TEST_MODE=WOS
+        - python: 3.5
+          env: KERAS_BACKEND=tensorflow TEST_MODE=WOS
+        - python: 3.6
+          env: KERAS_BACKEND=tensorflow TEST_MODE=MNIST
+        - python: 3.5
+          env: KERAS_BACKEND=tensorflow TEST_MODE=MNIST
+        - python: 3.6
+          env: KERAS_BACKEND=tensorflow TEST_MODE=Reuters21578
+        - python: 3.5
+          env: KERAS_BACKEND=tensorflow TEST_MODE=Reuters21578
+
+          
+install:
+  # code below is taken from http://conda.pydata.org/docs/travis.html
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - "pip install -U pip"
+  - "export PYTHONPATH=$PYTHONPATH:$(pwd)"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pytest pandas
+  - source activate test-environment
+  - pip install --only-binary=numpy,scipy numpy nose scipy matplotlib h5py theano
+  - conda install mkl mkl-service
+
+  # set library path
+  - export LD_LIBRARY_PATH=$HOME/miniconda/envs/test-environment/lib/:$LD_LIBRARY_PATH
+
+
+  # install pydot for visualization tests
+  - conda install pydot graphviz
+  
+before_script:
+  - pip install -r requirements.txt
+# command to run tests
+script:
+    - if [[ "$TEST_MODE" == "20NewsGroup" ]]; then
+          python Examples/_20NewsGroup.py;
+        elif [[ "$TEST_MODE" == "CIFAR" ]]; then
+          python Examples/CIFAR.py;
+        elif [[ "$TEST_MODE" == "IMDB" ]]; then
+          python Examples/IMDB.py;
+        elif [[ "$TEST_MODE" == "ORL" ]]; then
+          python Examples/ORL.py;
+        elif [[ "$TEST_MODE" == "MNIST" ]]; then
+          python Examples/MNIST.py;
+        elif [[ "$TEST_MODE" == "Reuters21578" ]]; then
+          python Examples/Reuters21578.py;
+        elif [[ "$TEST_MODE" == "WOS" ]]; then
+          python Examples/WOS5736.py;
+        fi
